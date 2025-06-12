@@ -8,52 +8,63 @@
 import SwiftUI
 
 struct QuizDetailView: View {
-    @ObservedObject var viewModel: QuizViewModel
-    let quiz: QuizQuestion
+    let question: QuizQuestion
+    @State private var selectedIndex: Int?
+    @State private var showCorrect = false
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("კითხვა №\(quiz.number)")
-                    .font(.headline)
-
-                Text(quiz.question)
+            VStack(alignment: .leading, spacing: 20) {
+                Text(question.question)
                     .font(.title3)
-                    .fixedSize(horizontal: false, vertical: true) // ✅ wrap multiline
+                    .fixedSize(horizontal: false, vertical: true) 
+                    .padding(.bottom)
 
-                ForEach(quiz.options.indices, id: \.self) { i in
-                    Button {
-                        viewModel.selectAnswer(q: quiz, index: i)
-                    } label: {
-                        HStack {
-                            Text("\(["ა","ბ","გ","დ","ე"][i])  \(quiz.options[i])")
-                                .multilineTextAlignment(.leading)
+                ForEach(question.options.indices, id: \.self) { index in
+                    Button(action: {
+                        selectedIndex = index
+                        showCorrect = true
+                    }) {
+                        HStack(alignment: .top) {
+                            Text(question.options[index])
+                                .foregroundColor(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
                             Spacer()
-                            if quiz.selectedIndex == i {
-                                Image(systemName: i == quiz.correctIndex ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                    .foregroundColor(i == quiz.correctIndex ? .green : .red)
+                            if selectedIndex == index {
+                                Image(systemName: "circle.inset.filled")
+                                    .foregroundColor(.blue)
+                            }
+                            if showCorrect, let correct = question.correctIndex, index == correct {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .foregroundColor(.green)
                             }
                         }
                         .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(8)
+                        .background(backgroundColor(for: index))
+                        .cornerRadius(10)
                     }
-                    .disabled(quiz.selectedIndex != nil)
-                }
-
-                if let selected = quiz.selectedIndex,
-                   let correct = quiz.correctIndex {
-                    Text(selected == correct ? "სწორია ✅" : "არასწორია ❌")
-                        .foregroundColor(selected == correct ? .green : .red)
-                        .font(.title3)
-                        .bold()
-                        .padding(.top, 12)
+                    .disabled(showCorrect)
                 }
 
                 Spacer()
             }
             .padding()
         }
-        .navigationTitle("კითხვა")
+        .navigationTitle("კითხვა \(question.number)")
+    }
+
+    private func backgroundColor(for index: Int) -> Color {
+        guard showCorrect, let correct = question.correctIndex else {
+            return Color.gray.opacity(0.1)
+        }
+
+        if index == correct {
+            return Color.green.opacity(0.3)
+        } else if selectedIndex == index {
+            return Color.red.opacity(0.3)
+        } else {
+            return Color.gray.opacity(0.1)
+        }
     }
 }
+

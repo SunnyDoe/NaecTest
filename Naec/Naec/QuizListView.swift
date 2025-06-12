@@ -8,34 +8,53 @@
 import SwiftUI
 
 struct QuizListView: View {
-    @StateObject var vm = QuizViewModel()
+    @StateObject var viewModel = QuizViewModel()
+
+    private func category(for question: QuizQuestion) -> String {
+        switch question.number {
+        case 1...5, 20...21:
+            return "ლოგიკა"
+        case 6...9:
+            return "წინადადების შევსება"
+        case 16...19:
+            return "ანალოგია"
+        default:
+            return "სხვა"
+        }
+    }
+
+    private var groupedQuestions: [String: [QuizQuestion]] {
+        Dictionary(grouping: viewModel.questions, by: category(for:))
+    }
 
     var body: some View {
         NavigationView {
-            List(vm.questions) { q in
-                NavigationLink(destination:
-                    QuizDetailView(viewModel: vm, quiz: q)
-                ) {
-                    VStack(alignment: .leading) {
-                        Text("№\(q.number)").font(.headline)
-                        Text(q.question.prefix(80) + "…")
-                            .font(.subheadline).foregroundColor(.secondary)
+            Group {
+                if viewModel.isLoading {
+                    ProgressView("Ვიწერთ კითხვებს...")
+                } else {
+                    List {
+                        ForEach(groupedQuestions.keys.sorted(), id: \.self) { category in
+                            Section(header: Text(category).font(.headline)) {
+                                ForEach(groupedQuestions[category] ?? []) { question in
+                                    NavigationLink(destination: QuizDetailView(question: question)) {
+                                        Text("კითხვა \(question.number)")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-            .navigationTitle("კითხვები")
-            .toolbar {
-                NavigationLink("Score", destination: ScoreSummaryView(viewModel: vm))
+            .navigationTitle("ეროვნული 2020")
+            .onAppear {
+                viewModel.fetchQuestions()
             }
-        }
-        .onAppear { vm.loadQuestions() }
-        .sheet(isPresented: $vm.showScore) {
-            ScoreSummaryView(viewModel: vm)
         }
     }
 }
 
-
 #Preview {
     QuizListView()
 }
+

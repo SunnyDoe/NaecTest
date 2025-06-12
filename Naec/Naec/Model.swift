@@ -5,13 +5,11 @@
 //  Created by Sandro Tsitskishvili on 12.06.25.
 //
 
-import Foundation
-
-struct QuizQuestion: Identifiable {
-    let id = UUID()
+struct QuizQuestion: Codable, Identifiable {
+    var id: Int { number }
     let number: Int
     let question: String
     let options: [String]
-    var correctIndex: Int?
-    var selectedIndex: Int?
+    let correctIndex: Int?
 }
+
